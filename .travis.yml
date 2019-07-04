@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ssmagas/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run ssmagas/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t ssmagas/multi-client ./client
+  - docker build -t ssmagas/multi-nginx ./nginx
+  - docker build -t ssmagas/multi-server ./server
+  - docker build -t ssmagas/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push ssmagas/multi-client
+  - docker push ssmagas/multi-nginx
+  - docker push ssmagas/multi-server
+  - docker push ssmagas/multi-worker
